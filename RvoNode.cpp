@@ -26,12 +26,12 @@ Vector3 AgentProperties::vPref() const{
 
 float AgentProperties::defaultMaxSpeed() const
 {
-    return 999.0f;
+    return 5.0f;
 }
 
 float AgentProperties::defaultNeighborDist() const
 {
-    return 999.0f;
+    return 20.0f;
 }
 
 float AgentProperties::defaultRadius() const
@@ -41,7 +41,7 @@ float AgentProperties::defaultRadius() const
 
 float AgentProperties::defaultTimeHorizon() const
 {
-    return 10.0f;
+    return 0.75f;
 }
 
 RvoNode::RvoNode(std::string id) : 
@@ -66,7 +66,6 @@ RvoNode::RvoNode(std::string id) :
 
 void RvoNode::inputMsgCb(std_msgs::Float32MultiArray::ConstPtr input)
 {   
-    std::cout << "CB!" << std::endl;
     std::vector<AgentProperties> props = parseInput(input);
     if(!_rvoInited){
         initRvo(props);
@@ -74,7 +73,6 @@ void RvoNode::inputMsgCb(std_msgs::Float32MultiArray::ConstPtr input)
     }
     double dt = 0.1;
     std::vector<Vector3> result = getVelocities(dt, props);
-    std::cout << result.size() << std::endl;
     publishResult(result);
 }
 
