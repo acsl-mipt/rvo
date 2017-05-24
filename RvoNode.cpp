@@ -66,12 +66,14 @@ RvoNode::RvoNode(std::string id) :
 
 void RvoNode::inputMsgCb(std_msgs::Float32MultiArray::ConstPtr input)
 {   
+    float dt = input->data.back();
+
     std::vector<AgentProperties> props = parseInput(input);
     if(!_rvoInited){
         initRvo(props);
         _rvoInited = true;
     }
-    double dt = 0.1;
+
     std::vector<Vector3> result = getVelocities(dt, props);
     publishResult(result);
 }
@@ -111,8 +113,8 @@ std::vector<Vector3> RvoNode::getVelocities(double dt, const std::vector<AgentPr
 }
 
 std::vector<AgentProperties> RvoNode::parseInput(std_msgs::Float32MultiArray::ConstPtr input) {
-    std::vector<AgentProperties> props;
-    int size = input->data.size();
+    std::vector<AgentProperties> props;    
+    int size = input->data.size() - 1; // substruct one because last value is dt
     int lineLen = 9;
     if (size == 0 || size % lineLen != 0){
         std::cout << "invalid input data" << std::endl;
