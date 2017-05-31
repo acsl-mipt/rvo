@@ -36,12 +36,14 @@ float AgentProperties::defaultNeighborDist() const
 
 float AgentProperties::defaultRadius() const
 {
-    return 1.0f;
+    return 0.4f;
+    //return 1.0f;
 }
 
 float AgentProperties::defaultTimeHorizon() const
 {
-    return 0.75f;
+    return 0.40f;
+    //return 0.75f;
 }
 
 RvoNode::RvoNode(std::string id) : 
@@ -49,8 +51,8 @@ RvoNode::RvoNode(std::string id) :
         ,_pub()
         ,_rvo()
 {
-    std::string nodeName = "rvo" +id; 
-    std::string pubName = "rvo_output"+ id;
+    std::string nodeName = "rvo_" + id;
+    std::string pubName = "rvo_output" + id;
     std::string subName = "rvo_input" + id;
     int rate = 10; // hz
     char **argv = 0;
@@ -85,8 +87,8 @@ void RvoNode::initRvo(const std::vector<AgentProperties> &props){
         _rvo.addAgent(prop.r(),
                       prop.defaultNeighborDist(),
                       maxNeighbors,
-                      prop.defaultTimeHorizon(),
-                      prop.defaultRadius(),
+                      prop.defaultTimeHorizon() + i * 0.10,
+                      prop.defaultRadius() + + i * 0.10,
                       prop.defaultMaxSpeed(),
                       prop.v()
                      );
