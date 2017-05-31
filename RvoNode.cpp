@@ -54,6 +54,7 @@ RvoNode::RvoNode(std::string id) :
     std::string nodeName = "rvo_" + id;
     std::string pubName = "rvo_output" + id;
     std::string subName = "rvo_input" + id;
+
     int rate = 10; // hz
     char **argv = 0;
     int argc = 0;
@@ -61,6 +62,8 @@ RvoNode::RvoNode(std::string id) :
     ros::NodeHandle nodeHandle;
     _pub = nodeHandle.advertise<std_msgs::Float32MultiArray>(pubName, rate);
     ros::Subscriber sub = nodeHandle.subscribe(subName, rate, &RvoNode::inputMsgCb, this);
+
+    t_prev = ros::Time::now().toSec();
     std::cout << "rvo node" << id << " started" << std::endl;
     ros::spin();
 }
@@ -68,13 +71,15 @@ RvoNode::RvoNode(std::string id) :
 
 void RvoNode::inputMsgCb(std_msgs::Float32MultiArray::ConstPtr input)
 {   
-    float dt = input->data.back();
 
     std::vector<AgentProperties> props = parseInput(input);
     if(!_rvoInited){
         initRvo(props);
         _rvoInited = true;
     }
+
+    double dt = ros::Time::now().toSec() - t_prev;
+    t_prev = ros::Time::now().toSec();
 
     std::vector<Vector3> result = getVelocities(dt, props);
     publishResult(result);
@@ -115,8 +120,8 @@ std::vector<Vector3> RvoNode::getVelocities(double dt, const std::vector<AgentPr
 }
 
 std::vector<AgentProperties> RvoNode::parseInput(std_msgs::Float32MultiArray::ConstPtr input) {
-    std::vector<AgentProperties> props;    
-    int size = input->data.size() - 1; // substruct one because last value is dt
+    std::vector<AgentProperties> props;
+    int size = input->data.size();
     int lineLen = 9;
     if (size == 0 || size % lineLen != 0){
         std::cout << "invalid input data" << std::endl;
