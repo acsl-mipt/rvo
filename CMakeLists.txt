@@ -15,7 +15,7 @@ catkin_package(
 )
 
 include_directories(${catkin_INCLUDE_DIRS})
-add_subdirectory(rvo)
+add_subdirectory(RVO2-3D/src)
 add_executable(rvo RvoNode.cpp
 )
 target_link_libraries(rvo RVO ${catkin_LIBRARIES})

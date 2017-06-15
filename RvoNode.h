@@ -7,7 +7,7 @@
 #include <std_msgs/Float32MultiArray.h>
 
 #include "ros/ros.h"
-#include "rvo/RVO.h"
+#include "RVO2-3D/src/RVO.h"
 
 
 
