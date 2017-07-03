@@ -50,10 +50,12 @@ public:
 private:
     
     void inputMsgCb(std_msgs::Float32MultiArray::ConstPtr input);
+    void inputMsgObstacleCb(std_msgs::Float32MultiArray::ConstPtr input);
     
     std::vector<AgentProperties> parseInput(std_msgs::Float32MultiArray::ConstPtr input);
     
     void initRvo(const std::vector<AgentProperties> &agents);
+    void initRvoObstacle(const std::vector<AgentProperties> &agents);
     
     std::vector<Vector3> getVelocities(double dt, const std::vector<AgentProperties>& props);
     
@@ -65,4 +67,6 @@ private:
     RVOSimulator _rvo;
     // time when last message came
     double t_prev;
+    int _first_copter_index;
+    int _last_copter_index;
 };
