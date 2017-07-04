@@ -106,7 +106,7 @@ void RvoNode::initRvo(const std::vector<AgentProperties> &props){
                       prop.defaultNeighborDist(),
                       maxNeighbors,
                       prop.defaultTimeHorizon() + i * 0.10,
-                      prop.defaultRadius() + + i * 0.10,
+                      prop.defaultRadius() + i * 0.10,
                       prop.defaultMaxSpeed(),
                       prop.v()
                      );
