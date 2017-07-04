@@ -98,7 +98,7 @@ void RvoNode::inputMsgCb(std_msgs::Float32MultiArray::ConstPtr input)
 void RvoNode::initRvo(const std::vector<AgentProperties> &props){
     size_t maxNeighbors = props.size() - 1;
 
-    _first_copter_index = _rvo.agents_.size();
+    _first_copter_index = _rvo.getNumAgents();
     for(int i = 0; i < props.size(); i++){
         AgentProperties prop = props.at(i);
 
@@ -111,7 +111,7 @@ void RvoNode::initRvo(const std::vector<AgentProperties> &props){
                       prop.v()
                      );
     }
-    _last_copter_index = _rvo.agents_.size() - 1;
+    _last_copter_index = _rvo.getNumAgents() - 1;
 }
 
 void RvoNode::initRvoObstacle(const std::vector<AgentProperties> &props){
