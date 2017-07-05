@@ -112,6 +112,12 @@ void RvoNode::initRvo(const std::vector<AgentProperties> &props){
                       prop.v()
                      );
     }
+
+    // update max neighbors for obstacles
+    for (int i = 0; i < _first_copter_index; ++i) {
+        _rvo.setAgentMaxNeighbors(i, maxNeighbors);
+    }
+
     _last_copter_index = _rvo.getNumAgents() - 1;
 }
 
