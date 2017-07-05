@@ -96,7 +96,7 @@ void RvoNode::inputMsgCb(std_msgs::Float32MultiArray::ConstPtr input)
 }
 
 void RvoNode::initRvo(const std::vector<AgentProperties> &props){
-//    size_t maxNeighbors = props.size() - 1;
+    size_t maxNeighbors = _rvo.getNumAgents() + props.size() - 1;
 
     _first_copter_index = _rvo.getNumAgents();
     for(int i = 0; i < props.size(); i++){
@@ -104,7 +104,7 @@ void RvoNode::initRvo(const std::vector<AgentProperties> &props){
 
         _rvo.addAgent(prop.r(),
                       prop.defaultNeighborDist(),
-                      1,
+                      maxNeighbors,
 //                      prop.defaultTimeHorizon() + i * 0.10,
                       2.0f,
                       prop.defaultRadius() + i * 0.10,
@@ -113,31 +113,16 @@ void RvoNode::initRvo(const std::vector<AgentProperties> &props){
                      );
     }
     _last_copter_index = _rvo.getNumAgents() - 1;
-
-
-    std::cout << "into init rvo \n" << " amount of agents: " << _rvo.getNumAgents() << " first_copter_index: " << _first_copter_index << " last_copter_index: " << _last_copter_index << "\n";
 }
 
 void RvoNode::initRvoObstacle(const std::vector<AgentProperties> &props){
-//    size_t maxNeighbors = props.size() - 1;
+    size_t maxNeighbors = _rvo.getNumAgents() + props.size() - 1;
     for(int i = 0; i < props.size(); i++){
         AgentProperties prop = props.at(i);
 
-
-        std::cout << "Got obstacle : \n"
-                  << prop.r().x() << "\n"
-                  << prop.r().y() << "\n"
-                  << prop.r().z() << "\n"
-                  << prop.v().x() << "\n"
-                  << prop.v().y() << "\n"
-                  << prop.v().z() << "\n"
-                  << prop.vPref().x() << "\n"
-                  << prop.vPref().y() << "\n"
-                  << prop.vPref().z() << "\n";
-
         _rvo.addAgent(prop.r(),
                       prop.defaultNeighborDist(),
-                      1,
+                      maxNeighbors,
                       prop.defaultTimeHorizon(),
                       0.5f,
                       prop.defaultMaxSpeed(),
