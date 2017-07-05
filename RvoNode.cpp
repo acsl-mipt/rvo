@@ -3,13 +3,13 @@
 AgentProperties::AgentProperties() : _r(), _v(), _vPref(){}
 
 AgentProperties::AgentProperties(
-                                const Vector3 &r,
-                                const Vector3 &v,
-                                const Vector3 &vPref
-) : _r(r)
-   ,_v(v)
-   ,_vPref(vPref)
-   {}
+        const Vector3 &r,
+        const Vector3 &v,
+        const Vector3 &vPref
+        ) : _r(r)
+  ,_v(v)
+  ,_vPref(vPref)
+{}
 
 Vector3 AgentProperties::r() const{
     return _r;
@@ -47,11 +47,9 @@ float AgentProperties::defaultTimeHorizon() const
 }
 
 RvoNode::RvoNode(std::string id) : 
-         _rvoInited(false)
-        ,_pub()
-        ,_rvo()
-       ,_first_copter_index(0)
-       ,_last_copter_index(0)
+    _rvoInited(false)
+  ,_pub()
+  ,_rvo()
 {
     std::string nodeName = "rvo_" + id;
     std::string pubName = "rvo_output" + id;
@@ -66,8 +64,6 @@ RvoNode::RvoNode(std::string id) :
     _pub = nodeHandle.advertise<std_msgs::Float32MultiArray>(pubName, rate);
     ros::Subscriber sub = nodeHandle.subscribe(subName, rate, &RvoNode::inputMsgCb, this);
     ros::Subscriber subObstacle = nodeHandle.subscribe(subNameObstacle, rate, &RvoNode::inputMsgObstacleCb, this);
-
-    t_prev = ros::Time::now().toSec();
     std::cout << "rvo node" << id << " started" << std::endl;
     ros::spin();
 }
@@ -75,17 +71,18 @@ RvoNode::RvoNode(std::string id) :
 
 void RvoNode::inputMsgObstacleCb(std_msgs::Float32MultiArray::ConstPtr input)
 {
-    std::vector<AgentProperties> props = parseInput(input);
-    initRvoObstacle(props);
+    std::cout << "Into OBSTACLES CALLBACK" << std::endl;
+    _obstacles = parseInput(input);
+    std::cout << "Amount of obstacles: " << _obstacles.size() << std::endl;
+    std::cout << "END OBSTACLES CALLBACK" << std::endl;
 }
 
 void RvoNode::inputMsgCb(std_msgs::Float32MultiArray::ConstPtr input)
-{   
-
+{
     std::vector<AgentProperties> props = parseInput(input);
     if(!_rvoInited){
-        initRvo(props);
-        _rvoInited = true;
+        _rvoInited = initRvo(props);
+        if (!_rvoInited) return;
     }
 
     double dt = ros::Time::now().toSec() - t_prev;
@@ -95,65 +92,65 @@ void RvoNode::inputMsgCb(std_msgs::Float32MultiArray::ConstPtr input)
     publishResult(result);
 }
 
-void RvoNode::initRvo(const std::vector<AgentProperties> &props){
-    size_t maxNeighbors = _rvo.getNumAgents() + props.size() - 1;
+bool RvoNode::initRvo(const std::vector<AgentProperties> &props){
 
-    _first_copter_index = _rvo.getNumAgents();
+    std::cout << "Starting rvo init" << std::endl;
+    if (_obstacles.size() == 0) {
+        return false;
+    }
+
+    size_t maxNeighbors = _obstacles.size() + props.size() - 1;
+    std::cout << "Max neighbors: " << maxNeighbors << std::endl;
+
+    // adding copters
     for(int i = 0; i < props.size(); i++){
         AgentProperties prop = props.at(i);
 
         _rvo.addAgent(prop.r(),
                       prop.defaultNeighborDist(),
                       maxNeighbors,
-//                      prop.defaultTimeHorizon() + i * 0.10,
-                      2.0f,
+                      //                      prop.defaultTimeHorizon() + i * 0.10,
+                      5.0f,
                       prop.defaultRadius() + i * 0.10,
                       prop.defaultMaxSpeed(),
                       prop.v()
-                     );
+                      );
     }
 
-    // update max neighbors for obstacles
-    for (int i = 0; i < _first_copter_index; ++i) {
-        _rvo.setAgentMaxNeighbors(i, maxNeighbors);
-    }
-
-    _last_copter_index = _rvo.getNumAgents() - 1;
-}
-
-void RvoNode::initRvoObstacle(const std::vector<AgentProperties> &props){
-    size_t maxNeighbors = _rvo.getNumAgents() + props.size() - 1;
-    for(int i = 0; i < props.size(); i++){
-        AgentProperties prop = props.at(i);
+    // adding obstacles
+    for(int i = 0; i < _obstacles.size(); i++){
+        AgentProperties prop = _obstacles.at(i);
 
         _rvo.addAgent(prop.r(),
                       prop.defaultNeighborDist(),
                       maxNeighbors,
-                      prop.defaultTimeHorizon(),
-                      0.5f,
-                      prop.defaultMaxSpeed(),
+                      3.0f,
+//                      prop.defaultTimeHorizon(),
+                      1.0f,
+//                      prop.defaultMaxSpeed(),
+                      0.0f,
                       prop.v()
-                     );
+                      );
     }
+
+    t_prev = ros::Time::now().toSec();
+    std::cout << "End rvo inited" << std::endl;
+    return true;
 }
+
 
 std::vector<Vector3> RvoNode::getVelocities(double dt, const std::vector<AgentProperties>& props)
 {
-    int copters_num = _last_copter_index - _first_copter_index + 1;
-    if (copters_num != props.size()) {
-        std::cout << "Invalid properties size!" << std::endl;
-    }
-
     std::vector<Vector3> result;
     _rvo.setTimeStep(dt);
-    for (int i = _first_copter_index, j = 0; i <= _last_copter_index; i++, j++){
-        _rvo.setAgentPosition(i, props.at(j).r());
-        _rvo.setAgentVelocity(i, props.at(j).v());
-        _rvo.setAgentPrefVelocity(i, props.at(j).vPref());
+    for (int i = 0; i < props.size(); i++){
+        _rvo.setAgentPosition(i, props.at(i).r());
+        _rvo.setAgentVelocity(i, props.at(i).v());
+        _rvo.setAgentPrefVelocity(i, props.at(i).vPref());
     }
     _rvo.doStep();
     
-    for (int i = _first_copter_index; i <= _last_copter_index; i++){
+    for (int i = 0; i < props.size(); i++){
         Vector3 resVel = _rvo.getAgentVelocity(i);
         result.push_back(resVel);
     }
