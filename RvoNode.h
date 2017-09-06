@@ -45,7 +45,7 @@ class RvoNode {
     
 public:
     
-    RvoNode(std::string id);
+    RvoNode(char* pId);
     
 private:
     
@@ -62,10 +62,12 @@ private:
     void publishResult(const std::vector<Vector3>& result);
     
 private:
+    int id;
     ros::Publisher _pub;
     bool _rvoInited;
     RVOSimulator _rvo;
     // time when last message came
     double t_prev;
     std::vector<AgentProperties> _obstacles;
+    bool obstacles_written;
 };

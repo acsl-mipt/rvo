@@ -1,4 +1,6 @@
 #include "RvoNode.h"
+#include <cstdlib>
+
 
 AgentProperties::AgentProperties() : _r(), _v(), _vPref(){}
 
@@ -36,25 +38,29 @@ float AgentProperties::defaultNeighborDist() const
 
 float AgentProperties::defaultRadius() const
 {
-    return 0.4f;
+    return 0.25;
+//    return 0.4f;
     //return 1.0f;
 }
 
 float AgentProperties::defaultTimeHorizon() const
 {
-    return 0.40f;
+    return 2.0f;
     //return 0.75f;
 }
 
-RvoNode::RvoNode(std::string id) : 
+RvoNode::RvoNode(char* pId) :
     _rvoInited(false)
   ,_pub()
   ,_rvo()
+  ,id(atoi(pId))
+  ,obstacles_written(false)
 {
-    std::string nodeName = "rvo_" + id;
-    std::string pubName = "rvo_output" + id;
-    std::string subName = "rvo_input" + id;
-    std::string subNameObstacle = "rvo_input_obs";
+    std::string id_str = std::string(pId);
+    std::string nodeName = "rvo_" + id_str;
+    std::string pubName = "rvo_output" + id_str;
+    std::string subName = "rvo_input" + id_str;
+    std::string subNameObstacle = "rvo_input_obs" + id_str;
 
     int rate = 10; // hz
     char **argv = 0;
@@ -75,6 +81,8 @@ void RvoNode::inputMsgObstacleCb(std_msgs::Float32MultiArray::ConstPtr input)
     _obstacles = parseInput(input);
     std::cout << "Amount of obstacles: " << _obstacles.size() << std::endl;
     std::cout << "END OBSTACLES CALLBACK" << std::endl;
+
+    obstacles_written = true;
 }
 
 void RvoNode::inputMsgCb(std_msgs::Float32MultiArray::ConstPtr input)
@@ -95,7 +103,7 @@ void RvoNode::inputMsgCb(std_msgs::Float32MultiArray::ConstPtr input)
 bool RvoNode::initRvo(const std::vector<AgentProperties> &props){
 
     std::cout << "Starting rvo init" << std::endl;
-    if (_obstacles.size() == 0) {
+    if (obstacles_written == false) {
         return false;
     }
 
@@ -109,9 +117,8 @@ bool RvoNode::initRvo(const std::vector<AgentProperties> &props){
         _rvo.addAgent(prop.r(),
                       prop.defaultNeighborDist(),
                       maxNeighbors,
-                      //                      prop.defaultTimeHorizon() + i * 0.10,
-                      5.0f,
-                      prop.defaultRadius() + i * 0.10,
+                      prop.defaultTimeHorizon() ,
+                      prop.defaultRadius(),
                       prop.defaultMaxSpeed(),
                       prop.v()
                       );
@@ -124,11 +131,9 @@ bool RvoNode::initRvo(const std::vector<AgentProperties> &props){
         _rvo.addAgent(prop.r(),
                       prop.defaultNeighborDist(),
                       maxNeighbors,
-                      3.0f,
-//                      prop.defaultTimeHorizon(),
-                      1.0f,
-//                      prop.defaultMaxSpeed(),
-                      0.0f,
+                      10.0f,
+                      0.25f,
+                      0.005f,
                       prop.v()
                       );
     }
@@ -146,14 +151,18 @@ std::vector<Vector3> RvoNode::getVelocities(double dt, const std::vector<AgentPr
     for (int i = 0; i < props.size(); i++){
         _rvo.setAgentPosition(i, props.at(i).r());
         _rvo.setAgentVelocity(i, props.at(i).v());
-        _rvo.setAgentPrefVelocity(i, props.at(i).vPref());
+
+        if (i+1 == id) {
+            _rvo.setAgentPrefVelocity(i, props.at(i).vPref());
+        }
     }
     _rvo.doStep();
     
-    for (int i = 0; i < props.size(); i++){
-        Vector3 resVel = _rvo.getAgentVelocity(i);
-        result.push_back(resVel);
-    }
+//    for (int i = 0; i < props.size(); i++){
+//        Vector3 resVel = _rvo.getAgentVelocity(i);
+//        result.push_back(resVel);
+//    }
+    result.push_back(_rvo.getAgentVelocity(id - 1));
     
     return result;
 }
@@ -193,6 +202,6 @@ void RvoNode::publishResult(const std::vector< Vector3 >& result)
 
 
 int main(int argc, char **argv) {
-    std::string id(argv[1]);
-    RvoNode node(id);
+//    std::string id(argv[1]);
+    RvoNode node(argv[1]);
 }
