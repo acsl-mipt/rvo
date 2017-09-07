@@ -69,5 +69,4 @@ private:
     // time when last message came
     double t_prev;
     std::vector<AgentProperties> _obstacles;
-    bool obstacles_written;
 };

@@ -54,7 +54,6 @@ RvoNode::RvoNode(char* pId) :
   ,_pub()
   ,_rvo()
   ,id(atoi(pId))
-  ,obstacles_written(false)
 {
     std::string id_str = std::string(pId);
     std::string nodeName = "rvo_" + id_str;
@@ -78,11 +77,14 @@ RvoNode::RvoNode(char* pId) :
 void RvoNode::inputMsgObstacleCb(std_msgs::Float32MultiArray::ConstPtr input)
 {
     std::cout << "Into OBSTACLES CALLBACK" << std::endl;
-    _obstacles = parseInput(input);
+
+    if (_obstacles.size() == 0) {
+        _obstacles = parseInput(input);
+    }
+
+    std::cout << "OBSTCLES SIZE: " << _obstacles.size() << std::endl;
     std::cout << "Amount of obstacles: " << _obstacles.size() << std::endl;
     std::cout << "END OBSTACLES CALLBACK" << std::endl;
-
-    obstacles_written = true;
 }
 
 void RvoNode::inputMsgCb(std_msgs::Float32MultiArray::ConstPtr input)
@@ -90,8 +92,9 @@ void RvoNode::inputMsgCb(std_msgs::Float32MultiArray::ConstPtr input)
     std::vector<AgentProperties> props = parseInput(input);
     if(!_rvoInited){
         _rvoInited = initRvo(props);
-        if (!_rvoInited) return;
     }
+
+    if (!_rvoInited) return;
 
     double dt = ros::Time::now().toSec() - t_prev;
     t_prev = ros::Time::now().toSec();
@@ -103,7 +106,7 @@ void RvoNode::inputMsgCb(std_msgs::Float32MultiArray::ConstPtr input)
 bool RvoNode::initRvo(const std::vector<AgentProperties> &props){
 
     std::cout << "Starting rvo init" << std::endl;
-    if (obstacles_written == false) {
+    if (_obstacles.size() == 0) {
         return false;
     }
 
@@ -131,7 +134,7 @@ bool RvoNode::initRvo(const std::vector<AgentProperties> &props){
         _rvo.addAgent(prop.r(),
                       prop.defaultNeighborDist(),
                       maxNeighbors,
-                      10.0f,
+                      5.0f,
                       0.25f,
                       0.005f,
                       prop.v()
