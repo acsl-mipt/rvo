@@ -38,14 +38,14 @@ float AgentProperties::defaultNeighborDist() const
 
 float AgentProperties::defaultRadius() const
 {
-    return 0.25;
+    return 0.3;
 //    return 0.4f;
     //return 1.0f;
 }
 
 float AgentProperties::defaultTimeHorizon() const
 {
-    return 2.0f;
+    return 3.0f;
     //return 0.75f;
 }
 
@@ -135,8 +135,8 @@ bool RvoNode::initRvo(const std::vector<AgentProperties> &props){
                       prop.defaultNeighborDist(),
                       maxNeighbors,
                       5.0f,
-                      0.25f,
-                      0.005f,
+                      0.3f,
+                      0.0000001f,
                       prop.v()
                       );
     }
